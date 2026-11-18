@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리아이 키타 데일리 로그</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { font-size: 1.5rem; text-align: center; margin-bottom: 20px; color: #2c3e50; }
+        .section { margin-bottom: 20px; padding: 15px; background: #fdfdfd; border: 1px solid #eee; border-radius: 12px; }
+        .section label { display: block; font-weight: bold; margin-bottom: 8px; color: #555; }
+        input[type="date"], input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        textarea { resize: vertical; height: 70px; }
+        .choice-group { display: flex; gap: 5px; margin-bottom: 8px; }
+        .choice-btn { flex: 1; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: 0.2s; }
+        .choice-btn.active { background: #0984e3; color: white; border-color: #0984e3; }
+        .alert-section { background: #fff5f5 !important; border-color: #feb2b2 !important; }
+        .save-btn { width: 100%; background: #00b894; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .save-btn:hover { background: #55efc4; }
+        .history-list { margin-top: 30px; }
+        .history-card { background: #fff; border: 1px solid #e1e1e1; padding: 15px; border-radius: 10px; margin-bottom: 10px; }
+        .history-card h3 { margin: 0 0 8px 0; font-size: 1.1rem; color: #0984e3; }
+        .history-card p { margin: 4px 0; font-size: 0.95rem; }
+        .img-preview { max-width: 100%; height: auto; border-radius: 8px; margin-top: 8px; }
+        .hint-text { font-size: 0.85rem; color: #777; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>👶 우리아이 키타 데일리 로그</h1>
+    
+    <!-- 날짜 -->
+    <div class="section">
+        <label>📅 기록 날짜</label>
+        <input type="date" id="logDate">
+    </div>
+
+    <!-- 등하원 시간 -->
+    <div class="section">
+        <label>⏰ 등원 / 하원 시간</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="schoolIn" placeholder="등원 시간 (예: 08:30)">
+            <input type="text" id="schoolOut" placeholder="하원 시간 (예: 15:00)">
+        </div>
+    </div>
+
+    <!-- 식단 및 사진 (독일어 식단표 연동) -->
+    <div class="section">
+        <label>🍱 오늘의 식단 (독일어 식단표 사진)</label>
+        <input type="file" id="mealImage" accept="image/*" style="margin-bottom: 10px;">
+        <div id="imageContainer"></div>
+        <div class="hint-text">💡 식단표 사진을 올리면 아래에 독일어 원문과 번역을 메모해 둘 수 있어요!</div>
+        <textarea id="mealMemo" placeholder="식단 내용 입력 (예: Grießbrei mit Himbeeren - 산딸기를 곁들인 그리스밀 죽)" style="margin-top: 8px;"></textarea>
+        <label style="margin-top: 10px; font-size: 0.9rem;">식사 만족도</label>
+        <div class="choice-group" data-target="mealStatus">
+            <button type="button" class="choice-btn" onclick="selectButton(this, 'mealStatus', '😋 잘 먹음')">😋 잘 먹음</button>
+            <button type="button" class="choice-btn" onclick="selectButton(this, 'mealStatus', '😐 보통')">😐 보통</button>
+            <button type="button" class="choice-btn" onclick="selectButton(this, 'mealStatus', '😞 잘 안 먹음')">😞 잘 안 먹음</button>
+        </div>
+        <input type="hidden" id="mealStatus">
+    </div>
+
+    <!-- 낮잠 및 활동 상태 -->
+    <div class="section">
+        <label>😴 낮잠 및 놀이 활동</label>
+        <input type="text" id="napTime" placeholder="낮잠 시간 (예: 12:30 - 14:00)" style="margin-bottom: 10px;">
+        <label style="font-size: 0.9rem;">오늘 아이 기분 및 놀이 상태</label>
+        <div class="choice-group" data-target="playStatus">
+            <button type="button" class="choice-btn" onclick="selectButton(this, 'playStatus', '🌟 잘 놀음')">🌟 잘 놀음</button>
+            <button type="button" class="choice-btn" onclick="selectButton(this, 'playStatus', '😊 평범함')">😊 평범함</button>
+            <button type="button" class="choice-btn" onclick="selectButton(this, 'playStatus', '🧸 피곤함 / 칭얼댐')">🧸 피곤함</button>
+        </div>
+        <input type="hidden" id="playStatus">
+    </div>
+
+    <!-- 배변 기록 (오직 카카만) -->
+    <div class="section">
+        <label>💩 배변 기록 (응가/카카)</label>
+        <div class="choice-group" data-target="poopStatus">
+            <button type="button" class="choice-btn" onclick="selectButton(this, 'poopStatus', '💩 응가 쌈')">💩 응가 쌈</button>
+            <button type="button" class="choice-btn" onclick="selectButton(this, 'poopStatus', '❌ 안 쌈')">❌ 안 쌈</button>
+        </div>
+        <input type="hidden" id="poopStatus">
+        <input type="text" id="poopDetail" placeholder="특이사항 (예: 어제 저녁에 많이 쌈)" style="margin-top: 8px;">
+    </div>
+
+    <!-- 🚨 다친 경우 / 아픈 경우 -->
+    <div class="section alert-section">
+        <label style="color: #c53030;">⚠️ 다침 / 아픈 경우 (Unfall / Krankheit)</label>
+        <input type="text" id="healthIssue" placeholder="예: 살짝 부딪힘, 열이 조금 남 등 특이사항">
+    </div>
+
+    <!-- 선생님 전달/알림장 메모 -->
+    <div class="section">
+        <label>📝 선생님 전달 및 메모</label>
+        <textarea id="teacherMemo" placeholder="선생님 피드백이나 전달사항 기록"></textarea>
+    </div>
+
+    <button class="save-btn" onclick="saveLog()">저장하기 💾</button>
+
+    <!-- 저장된 기록 보기 -->
+    <div class="history-list" id="historyList">
+        <h2>📅 저장된 일지 목록</h2>
+        <div id="historyContainer"></div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('logDate').valueAsDate = new Date();
+
+    function selectButton(btn, targetId, value) {
+        const group = btn.parentElement.children;
+        for(let b of group) b.classList.remove('active');
+        btn.classList.add('active');
+        document.getElementById(targetId).value = value;
+    }
+
+    let uploadedImageBase64 = "";
+    document.getElementById('mealImage').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if(file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                uploadedImageBase64 = event.target.result;
+                document.getElementById('imageContainer').innerHTML = `<img src="${uploadedImageBase64}" class="img-preview">`;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function saveLog() {
+        const logData = {
+            date: document.getElementById('logDate').value,
+            schoolIn: document.getElementById('schoolIn').value,
+            schoolOut: document.getElementById('schoolOut').value,
+            mealMemo: document.getElementById('mealMemo').value,
+            mealStatus: document.getElementById('mealStatus').value,
+            mealImage: uploadedImageBase64,
+            napTime: document.getElementById('napTime').value,
+            playStatus: document.getElementById('playStatus').value,
+            poopStatus: document.getElementById('poopStatus').value,
+            poopDetail: document.getElementById('poopDetail').value,
+            healthIssue: document.getElementById('healthIssue').value,
+            teacherMemo: document.getElementById('teacherMemo').value,
+        };
+
+        let logs = JSON.parse(localStorage.getItem('kita_logs_ko') || '[]');
+        logs.unshift(logData);
+        localStorage.setItem('kita_logs_ko', JSON.stringify(logs));
+
+        alert('성공적으로 저장되었습니다! 🎉');
+        loadLogs();
+    }
+
+    function loadLogs() {
+        const container = document.getElementById('historyContainer');
+        let logs = JSON.parse(localStorage.getItem('kita_logs_ko') || '[]');
+        
+        if(logs.length === 0) {
+            container.innerHTML = '<p style="color:#777; text-align:center;">아직 저장된 기록이 없습니다.</p>';
+            return;
+        }
+
+        container.innerHTML = logs.map(log => `
+            <div class="history-card">
+                <h3>📅 ${log.date}</h3>
+                <p><b>등/하원:</b> ${log.schoolIn || '-'} ~ ${log.schoolOut || '-'}</p>
+                <p><b>식단:</b> ${log.mealMemo || '-'} (${log.mealStatus || '-'})</p>
+                ${log.mealImage ? `<img src="${log.mealImage}" class="img-preview">` : ''}
+                <p><b>낮잠 & 놀이:</b> 낮잠: ${log.napTime || '-'} / 놀이: ${log.playStatus || '-'}</p>
+                <p><b>배변(카카):</b> ${log.poopStatus || '-'} ${log.poopDetail ? '(' + log.poopDetail + ')' : ''}</p>
+                ${log.healthIssue ? `<p style="color: #c53030;"><b>⚠️ 다침/아픔:</b> ${log.healthIssue}</p>` : ''}
+                <p><b>선생님 메모:</b> ${log.teacherMemo || '-'}</p>
+            </div>
+        `).join('');
+    }
+
+    loadLogs();
+</script>
+
+</body>
+</html>
